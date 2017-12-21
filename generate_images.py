@@ -12,6 +12,8 @@ https://stackoverflow.com/questions/3636344/read-flat-list-into-multidimensional
 
 import tables
 import sys
+import argparse
+import os
 import numpy as np
 from PIL import Image
 
@@ -119,9 +121,49 @@ def export_image(rgb_matrix, output_image_location):
         sys.exit()
 
 
+def validate_input_arguments(output_image_type, input_data_location, output_image_location):
+    """
+    Function that validates the user input is correct so it can be processed
+    :param str output_image_type: Whether the output image is going to be rgb or greyscale
+    :param str input_data_location: The file location of the input data
+    :param str output_image_location: The file location of the output image. Validate its extension
+    :return: Error if there is a problem otherwise returns nothing
+    :rtype: None
+    """
+    filename, file_extension = os.path.splitext(output_image_location)
+    # Do error checking making sure run_date is valid date and that input file exists
+    if not os.path.isfile(input_data_location):
+        print('There has been an error locating the input file. Please make sure this file exists {}'.format(input_data_location))
+        sys.exit()
+
+    if output_image_type.lower() != "rgb" and output_image_type.lower() != "greyscale":
+        print('Image output type must be equal to greyscale or rgb. Please make sure this argument is correct {}'.format(output_image_type))
+        sys.exit()
+
+    if file_extension.lower() != ".jpg" and file_extension.lower() != ".png" and file_extension.lower() != ".jpeg":
+        print('Image output file extension must be either jpg, png or jpeg. Please make sure this argument is correct {}'.format(output_image_location))
+        sys.exit()
+
+
 def main():
-    input_data_location = "/Users/deanhutton/workdir/Personal/Repos/challenge_statement/sample_data.inp"
-    output_image_location = "/Users/deanhutton/workdir/Personal/Repos/challenge_statement/rgb.png"
+    """
+    Main execution of program that is called when script is ran.
+    """
+    # parse command line args
+    parser = argparse.ArgumentParser(description='This is image generator made by Dean Hutton')
+    parser.add_argument('-i', '--input_data', help='Input file location used to generate the images.', required=True)
+    parser.add_argument('-ol', '--image_output_location', help='The the file location to save the out image.', required=True)
+    parser.add_argument('-ot', '--image_output_type', help="Select out image type. Either 'greyscale' or 'rgb'", required=True)
+    args = parser.parse_args()
+
+    output_image_type = args.image_output_type
+    input_data_location = args.input_data
+    output_image_location = args.image_output_location
+
+    # validate the command line args
+    validate_input_arguments(output_image_type, input_data_location, output_image_location)
+
+    # define the matrix height and width
     matrix_width, matrix_height = 256, 256
 
     # Create a blank 256x256 canvas with all RGB values zeroed out
@@ -130,8 +172,11 @@ def main():
     # Create data types needed to process. If there was an error exit
     timestamp_matrix, count_matrix = read_and_shape_input_data(input_data_location, matrix_height, matrix_width)
 
-    # Populate the out matrix with the data types
-    rgb_matrix = populate_rgb_matrix(timestamp_matrix, count_matrix, zeroed_out_rgb_matrix)
+    # Populate the out matrix with the data types. check if greyscale or rgb from input arguments
+    if output_image_type.lower() == 'rgb':
+        rgb_matrix = populate_rgb_matrix(timestamp_matrix, count_matrix, zeroed_out_rgb_matrix)
+    else:
+        rgb_matrix = populate_grey_scale_matrix(timestamp_matrix, count_matrix, zeroed_out_rgb_matrix)
 
     # Save the image to disk
     export_image(rgb_matrix, output_image_location)
