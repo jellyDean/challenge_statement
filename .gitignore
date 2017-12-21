@@ -102,3 +102,5 @@ ENV/
 /matrix.py
 /image.py
 /VE/
+.DS_Store
+.idea/
