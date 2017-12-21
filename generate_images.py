@@ -150,7 +150,7 @@ def main():
     Main execution of program that is called when script is ran.
     """
     # parse command line args
-    parser = argparse.ArgumentParser(description='This is image generator made by Dean Hutton')
+    parser = argparse.ArgumentParser(description='This is an image generator made by Dean Hutton')
     parser.add_argument('-i', '--input_data', help='Input file location used to generate the images.', required=True)
     parser.add_argument('-ol', '--image_output_location', help='The the file location to save the out image.', required=True)
     parser.add_argument('-ot', '--image_output_type', help="Select out image type. Either 'greyscale' or 'rgb'", required=True)
