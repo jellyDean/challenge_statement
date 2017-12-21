@@ -11,6 +11,7 @@ https://stackoverflow.com/questions/3636344/read-flat-list-into-multidimensional
 
 
 import tables
+import sys
 import numpy as np
 from PIL import Image
 
@@ -24,12 +25,16 @@ def read_and_shape_input_data(file_path, matrix_height, matrix_width):
     :return: timestamp_matrix and count_matrix matrices that contain the data that will be processed
     :rtype: numpy_arrays
     """
-    with tables.open_file(file_path) as infile:
+    try:
+        # TODO: do a check that timestamp_matrix and count_matrix length is 65536 if they aren't error out
+        with tables.open_file(file_path) as infile:
+            # convert to numpy array to make life easier. could also use modulus and build manually
+            timestamp_matrix = np.array(infile.root.time).reshape((matrix_height, matrix_width))
+            count_matrix = np.array(infile.root.counts).reshape((matrix_height, matrix_width))
 
-        # TODO: do a check that length and timestamps is 65536 if they arent error out and an exception too
-        # convert to numpy array to make life easier. could also use modulus and build manually
-        timestamp_matrix = np.array(infile.root.time).reshape((matrix_height, matrix_width))
-        count_matrix = np.array(infile.root.counts).reshape((matrix_height, matrix_width))
+    except Exception as e:
+        print "There has been an error parsing the input file. Please make sure the input data is valid", e
+        sys.exit()
 
     return timestamp_matrix, count_matrix
 
@@ -45,6 +50,7 @@ def populate_grey_scale_matrix(timestamp_matrix, count_matrix, matrix_template):
     :return: The populated matrix that can be saved to disk to generate an image
     :rtype: numpy_array
     """
+    # TODO: Do a check for one pixel, the length of timestamps and counts must be equal otherwise error out
     for i, row in enumerate(timestamp_matrix):
         for j, timestamps in enumerate(row):
             pix = [0, 0, 0]
@@ -105,11 +111,14 @@ def export_image(rgb_matrix, output_image_location):
     :return: Saves the image to disk
     :rtype: None
     """
-    img = Image.fromarray(rgb_matrix, 'RGB')
-    img.save(output_image_location)
+    try:
+        img = Image.fromarray(rgb_matrix, 'RGB')
+        img.save(output_image_location)
+    except Exception as e:
+        print "There has been an error saving the image ", e
+        sys.exit()
 
 
-# create a matrix RGB canvas with all 0's initially
 def main():
     input_data_location = "/Users/deanhutton/workdir/Personal/Repos/challenge_statement/sample_data.inp"
     output_image_location = "/Users/deanhutton/workdir/Personal/Repos/challenge_statement/rgb.png"
@@ -118,7 +127,7 @@ def main():
     # Create a blank 256x256 canvas with all RGB values zeroed out
     zeroed_out_rgb_matrix = np.zeros((matrix_height, matrix_width, 3), dtype=np.uint8)
 
-    # Create data types needed to process
+    # Create data types needed to process. If there was an error exit
     timestamp_matrix, count_matrix = read_and_shape_input_data(input_data_location, matrix_height, matrix_width)
 
     # Populate the out matrix with the data types
@@ -127,9 +136,6 @@ def main():
     # Save the image to disk
     export_image(rgb_matrix, output_image_location)
 
-
-    # TODO: Do a check for one pixel, the length of timestamps and counts must be equal otherwise error out
-    # TODO: leave the with as soon as possible so file doesnt remain open
 
 if __name__ == "__main__":
     # execute only if run as a script
