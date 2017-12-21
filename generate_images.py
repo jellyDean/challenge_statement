@@ -4,27 +4,28 @@ from PIL import Image
 # https://stackoverflow.com/questions/2659312/how-do-i-convert-a-numpy-array-to-and-display-an-image
 # https://stackoverflow.com/questions/3636344/read-flat-list-into-multidimensional-array-matrix-in-python
 
-input_data_location = '/Users/deanhutton/workdir/Personal/Repos/challenge_statement/sample_data.inp'
 
-with tables.open_file(input_data_location) as infile:
-    timestamps = infile.root.time
-    counts = infile.root.counts
+def read_and_shape_input_data(file_path, matrix_height, matrix_width):
 
-    # create a matrix RRGB canvas with all 0's initially
-    w, h = 256, 256
-    black_matrix = np.zeros((h, w, 3), dtype=np.uint8)
-    rgb_matrix = np.zeros((h, w, 3), dtype=np.uint8)
+    with tables.open_file(file_path) as infile:
 
-    # TODO: do a check that length and timestamps is 65536 if they arent error out
-    shape = (256, 256)
+        # TODO: do a check that length and timestamps is 65536 if they arent error out and an exception too
+        # convert to numpy array to make life easier. could also use modulus and build manually
+        timestamp_matrix = np.array(infile.root.time).reshape((matrix_height, matrix_width))
+        count_matrix = np.array(infile.root.counts).reshape((matrix_height, matrix_width))
 
-    # convert to numpy array to make life easier. could also use modulus and build manually
-    timestamp_numpy_array = np.array(timestamps)
-    count_numpy_array = np.array(counts)
+    return timestamp_matrix, count_matrix
 
-    # reshape the array into a n x n matrix
-    timestamp_matrix = timestamp_numpy_array.reshape(shape)
-    count_matrix = count_numpy_array.reshape(shape)
+# create a matrix RRGB canvas with all 0's initially
+def main():
+    input_data_location = '/Users/deanhutton/workdir/Personal/Repos/challenge_statement/sample_data.inp'
+    matrix_width, matrix_height = 256, 256
+
+    # Create a blank 256x256 canvas with all RGB values zeroed out
+    black_matrix = np.zeros((matrix_height, matrix_width, 3), dtype=np.uint8)
+    rgb_matrix = np.zeros((matrix_height, matrix_width, 3), dtype=np.uint8)
+
+    timestamp_matrix, count_matrix = read_and_shape_input_data(input_data_location, matrix_height, matrix_width)
 
     #Grey Scale Case
     # for i, row in enumerate(timestamp_matrix):
@@ -65,12 +66,15 @@ with tables.open_file(input_data_location) as infile:
             rgb_matrix[i][j] = pix
 
 
-# img = Image.fromarray(black_matrix, 'RGB')
-# img.save('greyscale.png')
+    # img = Image.fromarray(black_matrix, 'RGB')
+    # img.save('greyscale.png')
 
-img = Image.fromarray(rgb_matrix, 'RGB')
-img.save('rgb.png')
+    img = Image.fromarray(rgb_matrix, 'RGB')
+    img.save('rgb.png')
 
-# TODO: Do a check for one pixel, the length of timestamps and counts must be equal otherwise error out
-# TODO: leave the with as soon as possible so file doesnt remain open
+    # TODO: Do a check for one pixel, the length of timestamps and counts must be equal otherwise error out
+    # TODO: leave the with as soon as possible so file doesnt remain open
 
+if __name__ == "__main__":
+    # execute only if run as a script
+    main()
